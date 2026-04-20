@@ -1,3 +1,7 @@
+# Summary
+
+For this enhanced project, we took a prior module's basic code analyzer and modified it to use a real AI feature (Gemini API). Students need to understand that this project uses actual AI concepts and core elements that map to how real systems work. I integrated supervised feedback via, risk scoring and guardrails, to help the recommendation algorithm improve its overall reliability and accuracy in deciding whether to auto-apply code fixes. The AI was helpful with properly mapping out the new data flow and how it all fits together, but it made errors when trying to implement the guardrails and risk scoring logic. It needed further manual review of the code and overall design to verify everything actually works well. I would encourage students to keep planning as much as they can and if need be revisit some of the concepts we've already covered in class to help ensure that they are properly understanding how to augment this program with real AI capabilities.
+
 # 🐶 BugHound
 
 BugHound is a small, agent-style debugging tool. It analyzes a Python code snippet, proposes a fix, and runs basic reliability checks before deciding whether the fix is safe to apply automatically.
