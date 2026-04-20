@@ -102,9 +102,15 @@ def assess_risk(
         level = "high"
 
     # ----------------------------
-    # Auto-fix policy
+    # Auto-fix policy (GUARDRAIL)
     # ----------------------------
-    should_autofix = level == "low"
+    # IMPROVED: Only auto-fix when BOTH conditions are true:
+    # 1. Risk level is low (score >= 75)
+    # 2. No issues were detected (clean code)
+    # 
+    # Rationale: Code with issues (even Low severity) should have human review.
+    # This prevents "unsafe confidence" where Low severity issues trigger auto-changes.
+    should_autofix = level == "low" and len(issues) == 0
 
     if not reasons:
         reasons.append("No significant risks detected.")
