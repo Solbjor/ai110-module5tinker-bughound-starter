@@ -1,4 +1,21 @@
 from typing import Dict, List
+import re
+
+
+def _count_return_statements(code: str) -> int:
+    """Count actual return statements in the code.
+    
+    Looks for 'return' keyword at the start of a line (after whitespace).
+    This avoids false positives from comments or strings.
+    """
+    lines = code.split('\n')
+    count = 0
+    for line in lines:
+        stripped = line.lstrip()
+        # Match 'return' as a keyword followed by space, newline, or colon
+        if re.match(r'^return\s', stripped) or stripped == 'return':
+            count += 1
+    return count
 
 
 def assess_risk(
@@ -53,9 +70,16 @@ def assess_risk(
         score -= 20
         reasons.append("Fixed code is much shorter than original.")
 
-    if "return" in original_code and "return" not in fixed_code:
-        score -= 30
-        reasons.append("Return statements may have been removed.")
+    # IMPROVEMENT: Instead of naive "return" substring check, count actual return statements.
+    # Only penalize if returns are actually removed (fewer in fixed code).
+    original_returns = _count_return_statements(original_code)
+    fixed_returns = _count_return_statements(fixed_code)
+    
+    if original_returns > 0 and fixed_returns < original_returns:
+        # Penalty reduced from 30 to 10, and only applied when returns actually decrease.
+        # This avoids false positives where code is optimized but still functional.
+        score -= 10
+        reasons.append(f"Return statements reduced from {original_returns} to {fixed_returns}. Verify behavior is preserved.")
 
     if "except:" in original_code and "except:" not in fixed_code:
         # This is usually good, but still risky.

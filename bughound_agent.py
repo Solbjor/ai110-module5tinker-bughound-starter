@@ -69,11 +69,13 @@ class BugHoundAgent:
             f"CODE:\n{code_snippet}"
         )
 
-        # UPDATED: Added exception handling for API errors/rate limits
-        try:
-            raw = self.client.complete(system_prompt=system_prompt, user_prompt=user_prompt)
-        except Exception as e:
-            self._log("ANALYZE", f"API Error: {str(e)}. Falling back to heuristics.")
+        # UPDATED: Check for API errors explicitly before parsing
+        raw = self.client.complete(system_prompt=system_prompt, user_prompt=user_prompt)
+        
+        # IMPROVEMENT: Detect API failure markers and log them clearly
+        if raw.startswith("[BUGHOUND_API_ERROR:"):
+            error_detail = raw[len("[BUGHOUND_API_ERROR: "):-1]  # Strip markers
+            self._log("ANALYZE", f"LLM API error: {error_detail}. Falling back to heuristics.")
             return self._heuristic_analyze(code_snippet)
 
         issues = self._parse_json_array_of_issues(raw)
@@ -105,11 +107,13 @@ class BugHoundAgent:
             f"CODE:\n{code_snippet}"
         )
 
-        # UPDATED: Added exception handling for API errors/rate limits
-        try:
-            raw = self.client.complete(system_prompt=system_prompt, user_prompt=user_prompt)
-        except Exception as e:
-            self._log("ACT", f"API Error: {str(e)}. Falling back to heuristic fixer.")
+        # IMPROVED: Check for API errors explicitly, with better error logging
+        raw = self.client.complete(system_prompt=system_prompt, user_prompt=user_prompt)
+        
+        # IMPROVEMENT: Detect and log API failures rather than silently falling back
+        if raw.startswith("[BUGHOUND_API_ERROR:"):
+            error_detail = raw[len("[BUGHOUND_API_ERROR: "):-1]
+            self._log("ACT", f"LLM API error: {error_detail}. Falling back to heuristic fixer.")
             return self._heuristic_fix(code_snippet, issues)
 
         cleaned = self._strip_code_fences(raw).strip()

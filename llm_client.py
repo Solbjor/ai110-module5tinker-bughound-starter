@@ -43,23 +43,23 @@ class GeminiClient:
         """
         Sends a single request to Gemini.
 
-        UPDATED: Added try/except to handle rate limits and API errors gracefully.
-        If an error occurs, it returns an empty string, triggering the agent's 
-        heuristic fallback logic.
+        IMPROVED: Fixed to work with google-generativeai 0.8.6 API.
+        The older API version doesn't support system_instruction in generate_content(),
+        so we prepend the system prompt to the user prompt instead.
         """
         try:
+            # Combine system and user prompts for older API format
+            combined_prompt = f"{system_prompt}\n\n{user_prompt}"
+            
             response = self.model.generate_content(
-                [
-                    {"role": "system", "parts": [system_prompt]},
-                    {"role": "user", "parts": [user_prompt]},
-                ],
+                combined_prompt,
                 generation_config={"temperature": self.temperature},
             )
 
-            # Defensive: response.text can be None or raise an error if blocked by filters.
-            return response.text or ""
+            # Return the response text, or empty string if None
+            return response.text if response.text else ""
             
         except Exception as e:
-            # Returning empty string allows the agent to detect the failure 
-            # and switch to offline rules.
-            return ""
+            # Return error marker so agent can distinguish API failure from empty response
+            error_msg = f"[BUGHOUND_API_ERROR: {type(e).__name__}: {str(e)[:100]}]"
+            return error_msg
